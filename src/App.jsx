@@ -30,7 +30,7 @@ function Protected({ children }) {
   useEffect(() => {
     const verify = async () => {
       try {
-        await api.get("/users"); // protected endpoint
+        await api.get("/auth/me"); // changed from /users
         setValid(true);
       } catch {
         localStorage.removeItem("token");
@@ -518,52 +518,45 @@ const register = async () => {
 }
 
 /* ================= DASHBOARD ================= */
+/* ================= DASHBOARD ================= */
 function Dashboard() {
   const navigate = useNavigate();
-  const [users, setUsers] = useState([]);
-const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
-  api
-    .get("/auth/me")
-    .then((res) => setCurrentUser(res.data))
-    .catch(() => {
-      localStorage.removeItem("token");
-      navigate("/");
-    });
-}, []);
+    api
+      .get("/auth/me")
+      .then((res) => setCurrentUser(res.data))
+      .catch(() => {
+        localStorage.removeItem("token");
+        navigate("/");
+      });
+  }, []);
 
   useEffect(() => {
-  window.history.pushState(null, "", window.location.href);
-
-  const handleBackButton = () => {
     window.history.pushState(null, "", window.location.href);
-  };
 
-  window.addEventListener("popstate", handleBackButton);
+    const handleBackButton = () => {
+      window.history.pushState(null, "", window.location.href);
+    };
 
-  return () => {
-    window.removeEventListener("popstate", handleBackButton);
-  };
-}, []);
+    window.addEventListener("popstate", handleBackButton);
+
+    return () => {
+      window.removeEventListener("popstate", handleBackButton);
+    };
+  }, []);
 
   const getInitial = (name) =>
     name ? name.charAt(0).toUpperCase() : "?";
-
-  useEffect(() => {
-    api
-      .get("/users")
-      .then((res) => setUsers(res.data))
-      .catch(() => navigate("/"));
-  }, []);
 
   const logout = () => {
     setLoggingOut(true);
 
     setTimeout(() => {
       localStorage.removeItem("token");
-     navigate("/", { replace: true });
+      navigate("/", { replace: true });
     }, 2000);
   };
 
@@ -585,34 +578,32 @@ const [currentUser, setCurrentUser] = useState(null);
       <div className="topbar">
         <h2>My Secure App</h2>
 
-<div className="rightBar">
+        <div className="rightBar">
+          <div className="profileCircle">
+            {getInitial(currentUser?.name)}
+          </div>
 
-  <div className="profileCircle">
-    {getInitial(currentUser?.name)}
-  </div>
+          <span className="username">
+            {currentUser?.name}
+          </span>
 
-  <span className="username">
-    {currentUser?.name}
-  </span>
-
-  <button onClick={logout}>
-    Logout
-  </button>
-
-</div>
+          <button onClick={logout}>
+            Logout
+          </button>
+        </div>
       </div>
 
-      {/* USERS */}
+      {/* PROFILE CARD (only the logged-in user) */}
       <div className="grid">
-        {users.map((u) => (
-          <div className="card" key={u.id}>
+        {currentUser && (
+          <div className="card">
             <div className="avatarCircle">
-              {getInitial(u.name)}
+              {getInitial(currentUser.name)}
             </div>
-            <h3>{u.name}</h3>
-            <p>{u.email}</p>
+            <h3>{currentUser.name}</h3>
+            <p>{currentUser.email}</p>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
